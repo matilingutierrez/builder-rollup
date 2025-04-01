@@ -130,9 +130,6 @@ contract InboxTest is AbsInboxTest {
         uint256 depositAmount = 2 ether;
         string memory secret = "secret";
 
-        uint256 bridgeEthBalanceBefore = address(bridge).balance;
-        uint256 userEthBalanceBefore = address(user).balance;
-
         vm.deal(rollup, depositAmount);
 
         vm.startPrank(rollup);
@@ -140,11 +137,16 @@ contract InboxTest is AbsInboxTest {
         ethInbox.setFaucetAmount(keccak256(abi.encodePacked(secret)), depositAmount);
         vm.stopPrank();
 
+        vm.expectEmit(true, true, true, true);
+        emit InboxMessageDelivered(
+            0,
+            abi.encodePacked(user, depositAmount)
+        );
+
         vm.prank(user);
         ethInbox.claim(secret, user);
 
         assertEq(address(ethInbox).balance, 0, "Invalid ethInbox balance");
-        assertEq(user.balance, userEthBalanceBefore + depositAmount, "Invalid user balance");
     }
 
     function test_faucetEth_multiple() public {
@@ -164,9 +166,6 @@ contract InboxTest is AbsInboxTest {
             amounts[i] = depositAmount;
         }
 
-        uint256 bridgeEthBalanceBefore = address(bridge).balance;
-        uint256 userEthBalanceBefore = address(user).balance;
-
         vm.deal(rollup, totalAmount);
 
         vm.startPrank(rollup);
@@ -175,12 +174,16 @@ contract InboxTest is AbsInboxTest {
         vm.stopPrank();
 
         for (uint256 i = 0; i < 3; i++) {
+            vm.expectEmit(true, true, true, true);
+        emit InboxMessageDelivered(
+            i,
+                abi.encodePacked(user, depositAmount)
+            );
             vm.prank(user);
             ethInbox.claim(secrets[i], user);
         }
 
         assertEq(address(ethInbox).balance, 0, "Invalid ethInbox balance");
-        assertEq(user.balance, userEthBalanceBefore + totalAmount, "Invalid user balance");
     }
 
     function test_createRetryableTicket_FromEOA() public {

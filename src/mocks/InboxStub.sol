@@ -177,7 +177,7 @@ contract InboxStub is IInboxBase, IInbox {
         revert("NOT_IMPLEMENTED");
     }
 
-    function claim(string memory, address) external {
+    function claim(string memory, address) external returns (uint256) {
         revert("NOT_IMPLEMENTED");
     }
 

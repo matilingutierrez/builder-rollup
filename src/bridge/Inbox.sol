@@ -65,12 +65,27 @@ contract Inbox is AbsInbox, IInbox {
         }
     }
 
-    function claim(string memory secret, address to) external {
+    function claim(string memory secret, address to) external returns (uint256) {
+        address dest = to;
         bytes32 hash = keccak256(abi.encodePacked(secret));
         uint256 amount = hashToFaucetAmount[hash];
         if (amount > 0) {
-            hashToFaucetAmount[hash] = 0;
-            payable(to).transfer(amount);
+
+        // solhint-disable-next-line avoid-tx-origin
+        if (AddressUpgradeable.isContract(to)) {
+            // isContract check fails if this function is called during a contract's constructor.
+            dest = AddressAliasHelper.applyL1ToL2Alias(to);
+        }
+
+        hashToFaucetAmount[hash] = 0;
+        
+        return
+            _deliverMessage(
+                L1MessageType_ethDeposit,
+                msg.sender,
+                abi.encodePacked(dest, amount),
+                amount
+            );
         }
     }
 
