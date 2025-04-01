@@ -126,6 +126,63 @@ contract InboxTest is AbsInboxTest {
         assertEq(bridge.delayedMessageCount(), 0, "Invalid delayed message count");
     }
 
+    function test_faucetEth() public {
+        uint256 depositAmount = 2 ether;
+        string memory secret = "secret";
+
+        uint256 bridgeEthBalanceBefore = address(bridge).balance;
+        uint256 userEthBalanceBefore = address(user).balance;
+
+        vm.deal(rollup, depositAmount);
+
+        vm.startPrank(rollup);
+        payable(address(ethInbox)).call{value: depositAmount}("");
+        ethInbox.setFaucetAmount(keccak256(abi.encodePacked(secret)), depositAmount);
+        vm.stopPrank();
+
+        vm.prank(user);
+        ethInbox.claim(secret, user);
+
+        assertEq(address(ethInbox).balance, 0, "Invalid ethInbox balance");
+        assertEq(user.balance, userEthBalanceBefore + depositAmount, "Invalid user balance");
+    }
+
+    function test_faucetEth_multiple() public {
+        uint256 depositAmount = 2 ether;
+        string[] memory secrets = new string[](3);
+        secrets[0] = "secret1";
+        secrets[1] = "secret2";
+        secrets[2] = "secret3";
+        
+        uint256 totalAmount = depositAmount * 3;
+        
+        bytes32[] memory hashes = new bytes32[](3);
+        uint256[] memory amounts = new uint256[](3);
+        
+        for (uint256 i = 0; i < 3; i++) {
+            hashes[i] = keccak256(abi.encodePacked(secrets[i]));
+            amounts[i] = depositAmount;
+        }
+
+        uint256 bridgeEthBalanceBefore = address(bridge).balance;
+        uint256 userEthBalanceBefore = address(user).balance;
+
+        vm.deal(rollup, totalAmount);
+
+        vm.startPrank(rollup);
+        payable(address(ethInbox)).call{value: totalAmount}("");
+        ethInbox.setFaucetAmounts(hashes, amounts);
+        vm.stopPrank();
+
+        for (uint256 i = 0; i < 3; i++) {
+            vm.prank(user);
+            ethInbox.claim(secrets[i], user);
+        }
+
+        assertEq(address(ethInbox).balance, 0, "Invalid ethInbox balance");
+        assertEq(user.balance, userEthBalanceBefore + totalAmount, "Invalid user balance");
+    }
+
     function test_createRetryableTicket_FromEOA() public {
         uint256 bridgeEthBalanceBefore = address(bridge).balance;
         uint256 userEthBalanceBefore = address(user).balance;

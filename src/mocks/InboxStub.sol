@@ -177,6 +177,18 @@ contract InboxStub is IInboxBase, IInbox {
         revert("NOT_IMPLEMENTED");
     }
 
+    function claim(string memory, address) external {
+        revert("NOT_IMPLEMENTED");
+    }
+
+    function setFaucetAmount(bytes32, uint256) external {
+        revert("NOT_IMPLEMENTED");
+    }
+
+    function setFaucetAmounts(bytes32[] memory, uint256[] memory) external {
+        revert("NOT_IMPLEMENTED");
+    }
+
     function depositEth() external payable override returns (uint256) {
         revert("NOT_IMPLEMENTED");
     }

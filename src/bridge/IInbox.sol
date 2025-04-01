@@ -17,6 +17,12 @@ interface IInbox is IInboxBase {
         bytes calldata data
     ) external payable returns (uint256);
 
+    function claim(string memory secret, address to) external;
+
+    function setFaucetAmount(bytes32 hash, uint256 amount) external;
+
+    function setFaucetAmounts(bytes32[] memory hashes, uint256[] memory amounts) external;
+
     function sendL1FundedContractTransaction(
         uint256 gasLimit,
         uint256 maxFeePerGas,

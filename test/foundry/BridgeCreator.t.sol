@@ -86,7 +86,7 @@ contract BridgeCreatorTest is Test {
         BridgeCreator.BridgeContracts memory templs = BridgeCreator.BridgeContracts({
             bridge: Bridge(address(200)),
             sequencerInbox: SequencerInbox(address(201)),
-            inbox: Inbox(address(202)),
+            inbox: Inbox(payable(address(202))),
             rollupEventInbox: RollupEventInbox(address(203)),
             outbox: Outbox(address(204))
         });

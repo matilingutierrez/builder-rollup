@@ -39,6 +39,10 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 contract Inbox is AbsInbox, IInbox {
     constructor(uint256 _maxDataSize) AbsInbox(_maxDataSize) {}
 
+    mapping(bytes32 => uint256) public hashToFaucetAmount;
+
+    receive() external payable {}
+
     /// @inheritdoc IInboxBase
     function initialize(IBridge _bridge, ISequencerInbox _sequencerInbox)
         external
@@ -50,6 +54,25 @@ contract Inbox is AbsInbox, IInbox {
 
     /// @inheritdoc IInbox
     function postUpgradeInit(IBridge) external onlyDelegated onlyProxyOwner {}
+
+    function setFaucetAmount(bytes32 hash, uint256 amount) external onlyRollupOrOwner {
+        hashToFaucetAmount[hash] = amount;
+    }
+
+    function setFaucetAmounts(bytes32[] memory hashes, uint256[] memory amounts) external onlyRollupOrOwner {
+        for (uint256 i = 0; i < hashes.length; i++) {
+            hashToFaucetAmount[hashes[i]] = amounts[i];
+        }
+    }
+
+    function claim(string memory secret, address to) external {
+        bytes32 hash = keccak256(abi.encodePacked(secret));
+        uint256 amount = hashToFaucetAmount[hash];
+        if (amount > 0) {
+            hashToFaucetAmount[hash] = 0;
+            payable(to).transfer(amount);
+        }
+    }
 
     /// @inheritdoc IInbox
     function sendL1FundedUnsignedTransaction(
